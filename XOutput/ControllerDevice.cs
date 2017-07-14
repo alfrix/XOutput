@@ -49,7 +49,7 @@ namespace XOutput
             SaveManager.Save(joystick.Information.ProductName, mapping);
         }
 
-        private int[] GetAxes(JoystickState jstate)
+        public static int[] GetAxes(JoystickState jstate)
         {
             return new int[] { jstate.X, jstate.Y, jstate.Z, jstate.RotationX, jstate.RotationY, jstate.RotationZ };
         }

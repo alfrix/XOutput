@@ -78,6 +78,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ButtonBind.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ButtonBind.Designer.cs">
+      <DependentUpon>ButtonBind.cs</DependentUpon>
+    </Compile>
     <Compile Include="ControllerDevice.cs" />
     <Compile Include="ControllerManager.cs" />
     <Compile Include="ControllerOptions.cs">
@@ -97,6 +103,9 @@
     <Compile Include="XOut.Designer.cs">
       <DependentUpon>XOut.cs</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="ButtonBind.resx">
+      <DependentUpon>ButtonBind.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ControllerOptions.resx">
       <DependentUpon>ControllerOptions.cs</DependentUpon>
     </EmbeddedResource>
