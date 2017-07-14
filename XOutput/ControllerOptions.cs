@@ -1,6 +1,6 @@
-﻿using System;
+﻿using SlimDX.DirectInput;
+using System;
 using System.Linq;
-using System.Threading;
 using System.Windows.Forms;
 
 namespace XOutput
@@ -8,55 +8,30 @@ namespace XOutput
     public partial class ControllerOptions : Form
     {
         ControllerDevice dev;
-        private Thread detectThread;
         public ControllerOptions(ControllerDevice device)
         {
             InitializeComponent();
             dev = device;
-            int ind = 0;
+            foreach(Button button in Controls.OfType<Button>())
+            {
+                int ind = Int32.Parse(button.Tag.ToString());
+                button.Text = getBindingText(ind);
+                button.Click += Button_Click;
+            }
+        }
 
-            foreach (MultiLevelComboBox m in this.Controls.OfType<MultiLevelComboBox>()) {
-                //Tag structure: [Type, Number, Index]
-                m.Items[0] = getBindingText(ind); //Change combobox text according to saved binding
-                m.addOption("Disabled",
-                    tag: new byte[] { 255, 0, (byte)ind });
-                m.addOption("Detect",
-                    tag: new byte[] { 254, 0, (byte)ind });
-                ToolStripMenuItem axes = m.addMenu("Axes");
-                ToolStripMenuItem buttons = m.addMenu("Buttons");
-                ToolStripMenuItem dpads = m.addMenu("D-Pads");
-                ToolStripMenuItem iaxes = m.addMenu("Inverted Axes", axes);
-                ToolStripMenuItem haxes = m.addMenu("Half Axes", axes);
-                ToolStripMenuItem ihaxes = m.addMenu("Inverted Half Axes", axes);
-                for (int i = 1; i <= dev.joystick.Capabilities.ButtonCount; i++)
-                {
-                    m.addOption("Button " + i.ToString(), buttons,
-                        new byte[] { 0, (byte)(i - 1), (byte)ind });
-                }
-                for (int i = 1; i <= dev.joystick.Capabilities.PovCount; i++)
-                {
-                    m.addOption("D-Pad " + i.ToString() + " Up", dpads,
-                        new byte[] { 32, (byte)(i - 1), (byte)ind });
-                    m.addOption("D-Pad " + i.ToString() + " Down", dpads,
-                        new byte[] { 33, (byte)(i - 1), (byte)ind });
-                    m.addOption("D-Pad " + i.ToString() + " Left", dpads,
-                        new byte[] { 34, (byte)(i - 1), (byte)ind });
-                    m.addOption("D-Pad " + i.ToString() + " Right", dpads,
-                        new byte[] { 35, (byte)(i - 1), (byte)ind });
-                }
-                for (int i = 1; i <= dev.joystick.Capabilities.AxesCount; i++)
-                {
-                    m.addOption("Axis " + i.ToString(), axes,
-                        new byte[] { 16, (byte)(i - 1), (byte)ind });
-                    m.addOption("IAxis " + i.ToString(), iaxes,
-                        new byte[] { 17, (byte)(i - 1), (byte)ind });
-                    m.addOption("HAxis" + i.ToString(), haxes,
-                        new byte[] { 18, (byte)(i - 1), (byte)ind });
-                    m.addOption("IHAxis" + i.ToString(), ihaxes,
-                        new byte[] { 19, (byte)(i - 1), (byte)ind });
-                }
-                m.SelectionChangeCommitted += new System.EventHandler(SelectionChanged);
-                ind++;
+        private void Button_Click(object sender, EventArgs e)
+        {
+            Button button = (Button)sender;
+            MouseEventArgs me = (MouseEventArgs)e;
+            int ind = Int32.Parse(button.Tag.ToString());
+            if (me.Button == MouseButtons.Left)
+            {             
+                detectButton(ind, button);
+            }
+            else if (me.Button == MouseButtons.Right)
+            {
+                dev.mapping[ind * 2] = 255;
             }
         }
 
@@ -69,21 +44,77 @@ namespace XOutput
             byte type = (byte)((dev.mapping[i * 2] & 0xF0) >> 4);
             byte num = (byte)(dev.mapping[(i * 2) + 1] + 1);
             string[] typeString = new string[] { "Button {0}", "{1}Axis {0}", "D-Pad {0} {2}" };
-            string[] axesString = new string[] { "", "I", "H", "IH" };
+
             string[] dpadString = new string[] { "Up", "Down", "Left", "Right" };
-            return string.Format(typeString[type], num, axesString[subType], dpadString[subType]);
+            return string.Format(typeString[type], num, "", dpadString[subType]);
         }
 
-        private void SelectionChanged(object sender, EventArgs e) {
-            ToolStripMenuItem i = (ToolStripMenuItem)sender;
-            byte[] b = (byte[])i.Tag;
-            if (b[0] == 254) {
-                //start thread
-                return;
+        // Button Detection
+
+        private int[] getAxes(JoystickState jstate)
+        {
+            return new int[] { jstate.X, jstate.Y, jstate.Z, jstate.RotationX, jstate.RotationY, jstate.RotationZ };
+        }
+
+        private byte[] ifPressed(int[] axesStart)
+        {
+            dev.joystick.Poll();
+            JoystickState jState = dev.joystick.GetCurrentState();
+            bool[] buttons = jState.GetButtons();
+            int[] dPads = jState.GetPointOfViewControllers();
+            int[] axes = getAxes(jState);
+
+            // Buttons
+            int i = 0;
+            foreach(bool button in buttons)
+            {
+                if (button)
+                    return new byte[]{ 0, (byte)i};
+                i++;
             }
-            dev.mapping[b[2] * 2] = b[0];
-            dev.mapping[(b[2] * 2) + 1] = b[1];
-            dev.Save();
+
+            // dPads
+            i = 0;
+            foreach(int dPad in dPads)
+            {
+                if (dPad > -1)
+                    return new byte[] { (byte)(32 + i), 0};
+                i++;
+            }
+
+            // Axes
+            i = 0;
+            foreach(int axis in axes)
+            {
+                if (axis != axesStart[i])
+                    return new byte[] { 16, (byte)i};
+
+                i++;
+            }
+            return null;
+        }
+
+        private async void detectButton(int ind, Button button)
+        {
+            // Still axes position
+            dev.joystick.Poll();
+            int[] axes = getAxes(dev.joystick.GetCurrentState());
+
+            byte[] res;
+
+            // Wait until button pressed
+            while (true) {
+                res = ifPressed(axes);
+                if (res != null)
+                {
+                    // Map Button
+                    dev.mapping[ind * 2] = res[0];
+                    dev.mapping[(ind * 2) + 1] = res[1];
+                    break;
+                }              
+            }
+
+            button.Text = getBindingText(ind);
         }
 
         private void onClose(object sender, EventArgs e) {

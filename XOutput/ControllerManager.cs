@@ -8,7 +8,7 @@ using System.Windows.Forms;
 namespace XOutput
 {
 
-    class ControllerManager : ScpDevice
+    public class ControllerManager : ScpDevice
     {
         private class ContData
         {

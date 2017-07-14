@@ -79,7 +79,7 @@ namespace XOutput
             }
             string path = dirName + "\\" + devName + ".ini";
             if (!File.Exists(path)) {
-                File.Create(path);
+                //File.Create(path);
                 return null;
             }
             byte[] mapping = new byte[42];
@@ -101,9 +101,9 @@ namespace XOutput
                 Directory.CreateDirectory(dirName);
             }
             string path = dirName + "\\" + devName + ".ini";
-            if (!File.Exists(path)) {
+            /*if (!File.Exists(path)) {
                 File.Create(path);
-            }
+            }*/
             File.WriteAllText(path, generateSaveString(mapping));
         }
 
