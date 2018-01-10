@@ -54,6 +54,7 @@
             this.controllerBoxThree.SuspendLayout();
             this.controllerBoxFour.SuspendLayout();
             this.SuspendLayout();
+            this.settingsLabel = new System.Windows.Forms.LinkLabel();
             // 
             // StartStopBtn
             // 
@@ -256,6 +257,17 @@
             this.isExclusive.Text = "Exclusivity";
             this.isExclusive.UseVisualStyleBackColor = true;
             this.isExclusive.CheckedChanged += new System.EventHandler(this.isExclusive_CheckedChanged);
+            //
+            // settingsLabel
+            // 
+            this.settingsLabel.AutoSize = true;
+            this.settingsLabel.Location = new System.Drawing.Point(93, 321);
+            this.settingsLabel.Name = "settingsLabel";
+            this.settingsLabel.Size = new System.Drawing.Size(70, 13);
+            this.settingsLabel.TabIndex = 11;
+            this.settingsLabel.TabStop = true;
+            this.settingsLabel.Text = "Game Devices Control Panel";
+            this.settingsLabel.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.settingsLabel_LinkClicked);
             // 
             // XOut
             // 
@@ -263,6 +275,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(484, 351);
             this.Controls.Add(this.isExclusive);
+            this.Controls.Add(this.settingsLabel);
             this.Controls.Add(this.enabledOne);
             this.Controls.Add(this.enabledTwo);
             this.Controls.Add(this.enabledThree);
@@ -317,5 +330,6 @@
         private System.Windows.Forms.CheckBox enabledThree;
         private System.Windows.Forms.CheckBox enabledFour;
         private System.Windows.Forms.CheckBox isExclusive;
+        private System.Windows.Forms.LinkLabel settingsLabel;
     }
 }

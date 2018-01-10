@@ -164,6 +164,10 @@ namespace XOutput
             controllerManager.changeExclusive(!controllerManager.isExclusive);
         }
 
+        private void settingsLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            System.Diagnostics.Process.Start("control", "joy.cpl");
+        }
 
     }
 }
